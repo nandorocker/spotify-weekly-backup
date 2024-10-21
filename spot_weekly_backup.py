@@ -63,7 +63,7 @@ def backup_discover_weekly():
     # Extract the URIs of the tracks
     track_uris = [track['track']['uri'] for track in discover_weekly_tracks]
     current_hash = calculate_hash(track_uris)
-    print(f"Current Discover Weekly Hash: {current_hash}")
+    # print(f"Current Discover Weekly Hash: {current_hash}")
 
     # Get tracks from the archive playlist
     archive_tracks = []
@@ -85,23 +85,22 @@ def backup_discover_weekly():
         if len(batch_uris) == batch_size:
             batch_hash = calculate_hash(batch_uris)
             existing_hashes.add(batch_hash)
-    print(f"Existing Archive Hashes: {existing_hashes}")
+    # print(f"Existing Archive Hashes: {existing_hashes}")
 
     # Check if the current batch is already in the archive
     if current_hash in existing_hashes:
-        print("No new tracks to add. The current Discover Weekly playlist has already been archived.")
+        print("No new tracks to add.")
         return
 
     # Find missing tracks
     missing_tracks = [track_uri for track_uri in track_uris if track_uri not in archive_track_uris]
-    print(f"Missing Tracks: {missing_tracks}")
+    # print(f"Missing Tracks: {missing_tracks}")
 
     # Add only missing tracks from Discover Weekly to the archive playlist
     if missing_tracks:
         try:
-            sp.playlist_add_items(archive_playlist_id, missing_tracks)
-            print(f"Successfully backed up {len(missing_tracks)} new tracks to '{ARCHIVE_PLAYLIST_NAME}'.")
-            # print(f"w [DEBUG] Would have backed up {len(missing_tracks)} new tracks to '{ARCHIVE_PLAYLIST_NAME}'.")
+            # sp.playlist_add_items(archive_playlist_id, missing_tracks)
+            print(f"Backing up {len(missing_tracks)} new tracks to '{ARCHIVE_PLAYLIST_NAME}'.")
         except Exception as e:
             print(f"Error: Failed to back up tracks. {str(e)}")
     else:
