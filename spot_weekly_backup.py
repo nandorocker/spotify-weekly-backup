@@ -15,7 +15,6 @@ SCOPE = 'playlist-modify-public playlist-modify-private playlist-read-private'
 # Playlist details
 DISCOVER_WEEKLY_NAME = "Discover Weekly"
 ARCHIVE_PLAYLIST_NAME = "testlist"
-# ARCHIVE_PLAYLIST_NAME = "Discover Weekly Archive II"
 
 # Spotify authentication
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
@@ -38,7 +37,7 @@ def backup_discover_weekly():
     archive_playlist_id = get_playlist_id(ARCHIVE_PLAYLIST_NAME)
 
     if discover_weekly_id is None:
-        print("Could not find Discover Weekly playlist.")
+        print("Error: Could not find Discover Weekly playlist.")
         return
 
     if archive_playlist_id is None:
@@ -51,10 +50,28 @@ def backup_discover_weekly():
     discover_weekly_tracks = sp.playlist_tracks(discover_weekly_id)['items']
     track_uris = [track['track']['uri'] for track in discover_weekly_tracks]
 
+    # Check if the sequence of tracks has already been backed up
+    archive_tracks = sp.playlist_tracks(archive_playlist_id)['items']
+    archive_track_uris = [track['track']['uri'] for track in archive_tracks]
+
+    if len(track_uris) >= 2:
+        sequence_exists = False
+        for i in range(len(archive_track_uris) - 1):
+            if archive_track_uris[i:i + 2] == track_uris[:2]:
+                sequence_exists = True
+                break
+
+        if sequence_exists:
+            print("No new tracks to back up. The current Discover Weekly playlist has already been archived.")
+            return
+
     # Add tracks to the archive playlist
     if track_uris:
-        sp.playlist_add_items(archive_playlist_id, track_uris)
-        print(f"Successfully backed up {len(track_uris)} tracks to '{ARCHIVE_PLAYLIST_NAME}'.")
+        try:
+            sp.playlist_add_items(archive_playlist_id, track_uris)
+            print(f"Successfully backed up {len(track_uris)} tracks to '{ARCHIVE_PLAYLIST_NAME}'.")
+        except Exception as e:
+            print(f"Error: Failed to back up tracks. {str(e)}")
     else:
         print("No tracks found in Discover Weekly.")
 
