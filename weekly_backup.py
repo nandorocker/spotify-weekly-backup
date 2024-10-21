@@ -15,8 +15,8 @@ REDIRECT_URI = config['REDIRECT_URI']
 SCOPE = 'playlist-modify-public playlist-modify-private playlist-read-private'
 
 # Playlist details
-DISCOVER_WEEKLY_NAME = "Discover Weekly"
-ARCHIVE_PLAYLIST_NAME = "Discover Weekly Archive II"
+DISCOVER_WEEKLY_NAME = config['DISCOVER_WEEKLY_NAME']
+ARCHIVE_PLAYLIST_NAME = config['ARCHIVE_PLAYLIST_NAME']
 
 # Spotify authentication
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
