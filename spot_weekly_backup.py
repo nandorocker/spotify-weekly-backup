@@ -16,7 +16,7 @@ SCOPE = 'playlist-modify-public playlist-modify-private playlist-read-private'
 
 # Playlist details
 DISCOVER_WEEKLY_NAME = "Discover Weekly"
-ARCHIVE_PLAYLIST_NAME = "testlist"
+ARCHIVE_PLAYLIST_NAME = "Discover Weekly Archive II"
 
 # Spotify authentication
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
@@ -62,25 +62,50 @@ def backup_discover_weekly():
     discover_weekly_tracks = sp.playlist_tracks(discover_weekly_id)['items']
     # Extract the URIs of the tracks
     track_uris = [track['track']['uri'] for track in discover_weekly_tracks]
+    current_hash = calculate_hash(track_uris)
+    print(f"Current Discover Weekly Hash: {current_hash}")
 
     # Get tracks from the archive playlist
-    archive_tracks = sp.playlist_tracks(archive_playlist_id)['items']
+    archive_tracks = []
+    offset = 0
+    while True:
+        response = sp.playlist_tracks(archive_playlist_id, offset=offset)
+        archive_tracks.extend(response['items'])
+        if len(response['items']) == 0:
+            break
+        offset += len(response['items'])
     # Extract the URIs of the archived tracks
     archive_track_uris = [track['track']['uri'] for track in archive_tracks]
+    
+    # Calculate existing hashes for archived batches
+    batch_size = len(track_uris)
+    existing_hashes = set()
+    for i in range(0, len(archive_track_uris), batch_size):
+        batch_uris = archive_track_uris[i:i + batch_size]
+        if len(batch_uris) == batch_size:
+            batch_hash = calculate_hash(batch_uris)
+            existing_hashes.add(batch_hash)
+    print(f"Existing Archive Hashes: {existing_hashes}")
+
+    # Check if the current batch is already in the archive
+    if current_hash in existing_hashes:
+        print("No new tracks to add. The current Discover Weekly playlist has already been archived.")
+        return
 
     # Find missing tracks
     missing_tracks = [track_uri for track_uri in track_uris if track_uri not in archive_track_uris]
+    print(f"Missing Tracks: {missing_tracks}")
 
     # Add only missing tracks from Discover Weekly to the archive playlist
     if missing_tracks:
         try:
             sp.playlist_add_items(archive_playlist_id, missing_tracks)
             print(f"Successfully backed up {len(missing_tracks)} new tracks to '{ARCHIVE_PLAYLIST_NAME}'.")
+            # print(f"w [DEBUG] Would have backed up {len(missing_tracks)} new tracks to '{ARCHIVE_PLAYLIST_NAME}'.")
         except Exception as e:
-            # Print an error message if adding tracks fails
             print(f"Error: Failed to back up tracks. {str(e)}")
     else:
-        print("No new tracks to add. The current Discover Weekly playlist has already been archived.")
+        print("No new tracks to add.")
 
 if __name__ == "__main__":
     backup_discover_weekly()
