@@ -10,7 +10,7 @@ This project allows you to automatically back up your Spotify Discover Weekly pl
 
 1. **Clone the Repository**
    ```sh
-   git clone <repository-url>
+   git clone git@github.com:nandorocker/spotify-weekly-backup.git
    cd weekly_backup
    ```
 
