@@ -10,7 +10,7 @@ This project allows you to automatically back up your Spotify Discover Weekly pl
 
 1. **Clone the Repository**
    ```sh
-   git clone git@github.com:nandorocker/spotify-weekly-backup.git
+   git clone <repository-url>
    cd weekly_backup
    ```
 
@@ -27,7 +27,7 @@ This project allows you to automatically back up your Spotify Discover Weekly pl
 
 ## Setup Configuration Files
 
-### 1. `config.json`
+### `config.json`
 Create a `config.json` file in the root directory of the project with your Spotify API credentials. You can obtain these credentials by creating a Spotify app at [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/applications).
 
 **`config.json`**:
@@ -42,20 +42,21 @@ Create a `config.json` file in the root directory of the project with your Spoti
 - **CLIENT_SECRET**: Your Spotify application's client secret.
 - **REDIRECT_URI**: The URI to redirect after authorization (use `http://localhost:8888/callback` for local testing).
 
-### 2. `paths.env`
-Create a `paths.env` file to specify your project directory path. This keeps the absolute paths outside of the codebase, ensuring privacy and ease of sharing.
+## GitHub Actions Setup
 
-**`paths.env`**:
-```sh
-PROJECT_DIR=/absolute/path/to/weekly_backup/
-```
-- **PROJECT_DIR**: The absolute path to the project directory.
+You can automate the backup using GitHub Actions, which runs the script every week without depending on your local machine's availability.
 
-Add `paths.env` to `.gitignore` to ensure it is not committed to version control.
+### Set Up GitHub Secrets
 
-## Running the Script
+1. Go to your GitHub repository, click on **Settings** -> **Secrets and variables** -> **Actions**.
+2. Create the following repository secrets:
+   - **`SPOTIFY_CLIENT_ID`**: Your Spotify Client ID.
+   - **`SPOTIFY_CLIENT_SECRET`**: Your Spotify Client Secret.
+   - **`SPOTIFY_REDIRECT_URI`**: Set this to `http://localhost:8888/callback`.
 
-To run the backup script:
+## Running the Script Locally
+
+To run the backup script manually:
 
 1. **Activate the Virtual Environment**
    ```sh
@@ -64,27 +65,8 @@ To run the backup script:
 
 2. **Run the Script**
    ```sh
-   ./run_weekly_backup.sh
+   python weekly_backup.py
    ```
-
-## Setting Up Weekly Automation
-
-To run this script weekly, use `cron` on your Mac:
-
-1. **Edit Cron Jobs**
-   ```sh
-   crontab -e
-   ```
-
-2. **Add a Cron Job**
-   ```sh
-   0 9 * * 1 /absolute/path/to/weekly_backup/run_weekly_backup.sh >> /absolute/path/to/weekly_backup/weekly_backup.log 2>&1
-   ```
-   This schedules the script to run every Monday at 9 AM.
-
-## Troubleshooting
-- Make sure your `config.json` and `paths.env` files are correctly set up.
-- Ensure your Spotify application is correctly configured with the appropriate scopes.
 
 ## License
 This project is licensed under the MIT License.
