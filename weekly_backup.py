@@ -3,15 +3,16 @@ from spotipy.oauth2 import SpotifyOAuth
 import datetime
 import json
 import hashlib
+import os
 
 # Load Spotify API credentials from config.json
 with open('config.json') as config_file:
     config = json.load(config_file)
 
 # Spotify API credentials
-CLIENT_ID = config['CLIENT_ID']
-CLIENT_SECRET = config['CLIENT_SECRET']
-REDIRECT_URI = config['REDIRECT_URI']
+CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
+CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
+REDIRECT_URI = os.getenv('SPOTIFY_REDIRECT_URI')
 SCOPE = 'playlist-modify-public playlist-modify-private playlist-read-private'
 
 # Playlist details
