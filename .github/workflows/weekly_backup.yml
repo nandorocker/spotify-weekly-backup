@@ -31,4 +31,4 @@ jobs:
           SPOTIFY_REDIRECT_URI: ${{ secrets.SPOTIFY_REDIRECT_URI }}
         run: |
           . venv/bin/activate
-          python spotify_backup.py
+          python weekly_backup.py
