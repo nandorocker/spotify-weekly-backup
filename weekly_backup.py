@@ -14,9 +14,9 @@ def load_config():
     except FileNotFoundError:
         # Fallback to environment variables if config.json is not available
         config = {
-            'CLIENT_ID': os.getenv('SPOTIFY_CLIENT_ID'),
-            'CLIENT_SECRET': os.getenv('SPOTIFY_CLIENT_SECRET'),
-            'REDIRECT_URI': os.getenv('SPOTIFY_REDIRECT_URI'),
+            'CLIENT_ID': os.getenv('CLIENT_ID'),
+            'CLIENT_SECRET': os.getenv('CLIENT_SECRET'),
+            'REDIRECT_URI': os.getenv('REDIRECT_URI'),
             'DISCOVER_WEEKLY_NAME': os.getenv('DISCOVER_WEEKLY_NAME'),
             'ARCHIVE_PLAYLIST_NAME': os.getenv('ARCHIVE_PLAYLIST_NAME')
         }
