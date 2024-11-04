@@ -5,25 +5,46 @@ import json
 import hashlib
 import os
 
-# Load Spotify API credentials from config.json
-with open('config.json') as config_file:
-    config = json.load(config_file)
+# Load Spotify API credentials
+def load_config():
+    try:
+        with open('config.json') as config_file:
+            config = json.load(config_file)
+            print("Loaded credentials from config.json")
+    except FileNotFoundError:
+        # Fallback to environment variables if config.json is not available
+        config = {
+            'CLIENT_ID': os.getenv('SPOTIFY_CLIENT_ID'),
+            'CLIENT_SECRET': os.getenv('SPOTIFY_CLIENT_SECRET'),
+            'REDIRECT_URI': os.getenv('SPOTIFY_REDIRECT_URI'),
+            'DISCOVER_WEEKLY_NAME': os.getenv('DISCOVER_WEEKLY_NAME'),
+            'ARCHIVE_PLAYLIST_NAME': os.getenv('ARCHIVE_PLAYLIST_NAME')
+        }
+        print("Loaded credentials from environment variables")
+    return config
 
-# Spotify API credentials
-CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
-CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
-REDIRECT_URI = os.getenv('SPOTIFY_REDIRECT_URI')
+config = load_config()
+
+# Set default values for missing keys only if not already set
+if not config.get('DISCOVER_WEEKLY_NAME'):
+    config['DISCOVER_WEEKLY_NAME'] = 'Discover Weekly'
+if not config.get('ARCHIVE_PLAYLIST_NAME'):
+    config['ARCHIVE_PLAYLIST_NAME'] = 'Discover Weekly Archive'
+
+# Check if all required credentials are set
+required_keys = ['CLIENT_ID', 'CLIENT_SECRET', 'REDIRECT_URI', 'DISCOVER_WEEKLY_NAME', 'ARCHIVE_PLAYLIST_NAME']
+missing_keys = [key for key in required_keys if not config.get(key) or config.get(key) == '']
+if missing_keys:
+    raise ValueError(f"Spotify credentials are not set for: {', '.join(missing_keys)}")
+
+# Spotify API scope
 SCOPE = 'playlist-modify-public playlist-modify-private playlist-read-private'
-
-# Playlist details
-DISCOVER_WEEKLY_NAME = config['DISCOVER_WEEKLY_NAME']
-ARCHIVE_PLAYLIST_NAME = config['ARCHIVE_PLAYLIST_NAME']
 
 # Spotify authentication
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
-    client_id=CLIENT_ID,
-    client_secret=CLIENT_SECRET,
-    redirect_uri=REDIRECT_URI,
+    client_id=config['CLIENT_ID'],
+    client_secret=config['CLIENT_SECRET'],
+    redirect_uri=config['REDIRECT_URI'],
     scope=SCOPE
 ))
 
@@ -44,8 +65,8 @@ def calculate_hash(track_uris):
 
 def backup_discover_weekly():
     # Get the Discover Weekly and Archive playlist IDs
-    discover_weekly_id = get_playlist_id(DISCOVER_WEEKLY_NAME)
-    archive_playlist_id = get_playlist_id(ARCHIVE_PLAYLIST_NAME)
+    discover_weekly_id = get_playlist_id(config['DISCOVER_WEEKLY_NAME'])
+    archive_playlist_id = get_playlist_id(config['ARCHIVE_PLAYLIST_NAME'])
 
     # Check if the Discover Weekly playlist exists
     if discover_weekly_id is None:
@@ -56,7 +77,7 @@ def backup_discover_weekly():
     if archive_playlist_id is None:
         user_id = sp.current_user()['id']  # Get the current user's ID
         # Create a new playlist for archiving Discover Weekly
-        archive_playlist = sp.user_playlist_create(user_id, ARCHIVE_PLAYLIST_NAME, public=False)
+        archive_playlist = sp.user_playlist_create(user_id, config['ARCHIVE_PLAYLIST_NAME'], public=False)
         archive_playlist_id = archive_playlist['id']
 
     # Get tracks from Discover Weekly
@@ -64,7 +85,6 @@ def backup_discover_weekly():
     # Extract the URIs of the tracks
     track_uris = [track['track']['uri'] for track in discover_weekly_tracks]
     current_hash = calculate_hash(track_uris)
-    # print(f"Current Discover Weekly Hash: {current_hash}")
 
     # Get tracks from the archive playlist
     archive_tracks = []
@@ -86,7 +106,6 @@ def backup_discover_weekly():
         if len(batch_uris) == batch_size:
             batch_hash = calculate_hash(batch_uris)
             existing_hashes.add(batch_hash)
-    # print(f"Existing Archive Hashes: {existing_hashes}")
 
     # Check if the current batch is already in the archive
     if current_hash in existing_hashes:
@@ -95,13 +114,12 @@ def backup_discover_weekly():
 
     # Find missing tracks
     missing_tracks = [track_uri for track_uri in track_uris if track_uri not in archive_track_uris]
-    # print(f"Missing Tracks: {missing_tracks}")
 
     # Add only missing tracks from Discover Weekly to the archive playlist
     if missing_tracks:
         try:
-            # sp.playlist_add_items(archive_playlist_id, missing_tracks)
-            print(f"Backing up {len(missing_tracks)} new tracks to '{ARCHIVE_PLAYLIST_NAME}'.")
+            sp.playlist_add_items(archive_playlist_id, missing_tracks)
+            print(f"Backing up {len(missing_tracks)} new tracks to '{config['ARCHIVE_PLAYLIST_NAME']}'.")
         except Exception as e:
             print(f"Error: Failed to back up tracks. {str(e)}")
     else:
